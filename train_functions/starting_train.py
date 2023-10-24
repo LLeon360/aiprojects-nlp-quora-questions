@@ -5,6 +5,9 @@ from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 
+from sklearn.metrics import recall_score
+
+
 def starting_train(train_dataset, val_dataset, model, hyperparameters, n_eval, device):
     """
     Trains and evaluates a model.
@@ -25,7 +28,7 @@ def starting_train(train_dataset, val_dataset, model, hyperparameters, n_eval, d
         train_dataset, batch_size=batch_size, shuffle=True
     )
     val_loader = torch.utils.data.DataLoader(
-        val_dataset, batch_size=len(val_dataset[0]), shuffle=True
+        val_dataset, batch_size=len(val_dataset), shuffle=True
     )
 
     # Initalize optimizer (for gradient descent) and loss function
@@ -63,22 +66,24 @@ def starting_train(train_dataset, val_dataset, model, hyperparameters, n_eval, d
 
             # Periodically evaluate our model + log to Tensorboard
             if step % n_eval == 0:
-                # TODO:
-                # Compute training loss and accuracy.
+                # Compute training loss and metrics
                 # Log the results to Tensorboard.
-                predictions = torch.round(outputs)
-                acc = compute_accuracy(predictions, labels)
+                preds = torch.round(outputs).detach()
+                acc = compute_accuracy(preds, labels)
                 writer.add_scalar('Loss/train', loss, epoch)
-                writer.add_scalar('Accuracy/train', acc, epoch)
+                # writer.add_scalar('Accuracy/train', acc, epoch)
+                writer.add_scalar('Specificity/train', compute_specificity(preds, labels), epoch)
+                writer.add_scalar('Recall/train', compute_recall(preds, labels), epoch)
 
-                # TODO:
-                # Compute validation loss and accuracy.
+                # Compute validation loss and metrics
                 # Log the results to Tensorboard. 
                 # Don't forget to turn off gradient calculations!
 
-                loss, acc = evaluate(val_loader, model, loss_fn, device) 
-                writer.add_scalar('Loss/val', loss, epoch)
-                writer.add_scalar('Accuracy/val', acc, epoch)
+                results = evaluate(val_loader, model, loss_fn, device) 
+                writer.add_scalar('Loss/val', results["loss"], epoch)
+                # writer.add_scalar('Accuracy/val', results["acc"], epoch)
+                writer.add_scalar('Specificity/val', results["spec"], epoch)
+                writer.add_scalar('Recall/val', results["recall"], epoch)
 
                 #turn on training, evaluate turns off training
                 model.train()
@@ -104,6 +109,18 @@ def compute_accuracy(outputs, labels):
     n_total = len(outputs)
     return n_correct / n_total
 
+def compute_specificity(outputs, labels):
+    """
+    Computes the specificity of a model's predictions. Uses recall but treats negative as positive
+    """
+    return recall_score(y_true=labels, y_pred=outputs, pos_label=0)
+
+def compute_recall(outputs, labels):
+    """
+    Computes the recall of a model's predictions.
+    """
+
+    return recall_score(y_true=labels, y_pred=outputs)
 
 def evaluate(val_loader, model, loss_fn, device):
     """
@@ -119,9 +136,13 @@ def evaluate(val_loader, model, loss_fn, device):
     outputs = foward_prop(features, labels, model, device)
     
     loss = loss_fn(outputs, labels)
-    predictions = torch.round(outputs)
-
-    return loss, compute_accuracy(outputs, labels)
+    preds = torch.round(outputs).detach()
+    return { 
+        "loss":loss, 
+        "acc":compute_accuracy(preds, labels), 
+        "spec": compute_specificity(preds, labels),
+        "recall": compute_recall(preds, labels)
+    }
 
 def foward_prop(features, labels, model, device): 
     
@@ -130,5 +151,4 @@ def foward_prop(features, labels, model, device):
 
     outputs = model(features)
     outputs = torch.flatten(outputs)
-
     return outputs
