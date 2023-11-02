@@ -22,6 +22,10 @@ class StartingDataset(torch.utils.data.Dataset):
         self.token2idx = self.vectorizer.vocabulary_ # dictionary converting words to their counts
         self.idx2token = {idx: token for token, idx in self.token2idx.items()} # same dictionary backwards
 
+        #float32 cast
+        self.sequences = np.float32(self.sequences.toarray())
+        self.labels = np.float32(self.labels)
+
     # TODO: return an instance from the dataset
     def __getitem__(self, i):
         '''
@@ -29,11 +33,7 @@ class StartingDataset(torch.utils.data.Dataset):
         '''
 
         # return the ith sample's list of word counts and label
-        features = np.float32(self.sequences[i, :].toarray())
-        # features = self.sequences[i, :].toarray()
-        labels = self.labels[i]
-        labels = np.float32(labels)
-        return features, labels
+        return self.sequences[i, :], self.labels[i]
 
     # TODO: return the size of the dataset
     def __len__(self):
