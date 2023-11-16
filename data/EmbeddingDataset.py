@@ -13,7 +13,7 @@ class EmbeddingDataset(torch.utils.data.Dataset):
         '''
 
         # get labels from label column as list
-        self.labels = df.label.tolist()
+        self.labels = df['target'].tolist()
 
         # make dictionaries translating from word to index and index to word
         self.word2idx = {term:idx for idx,term in enumerate(vocab)}
@@ -25,24 +25,24 @@ class EmbeddingDataset(torch.utils.data.Dataset):
         # make input ids are the indices that each word translates, sequence_len is length of sequence excluding padding, label is the label
         self.input_ids = []
         self.sequence_lens = []
-        self.labels = []
 
-        self.input_ids, self.sequence_lens = [self.convert_text_to_input_ids(words, max_seq_length) for words in df['question_ids']]
-        self.labels = df['target'].tolist()
+        for words in df['question_text']:
+            input_ids, max_seq_length = self.convert_text_to_input_ids(words, max_seq_length)
+            self.input_ids.append(input_ids)
+            self.sequence_lens.append(max_seq_length)
 
         #sanity checks
         assert len(self.input_ids) == df.shape[0]
         assert len(self.sequence_lens) == df.shape[0]
         assert len(self.labels) == df.shape[0]
 
-    # return an instance from the dataset
     def __getitem__(self, i):
-        '''
-        i (int): the desired instance of the dataset
-        '''
-
-        # return the ith sample's list of word counts and label
-        return self.sequences[i, :], self.labels[i] 
+        # for the ith indexm return a dictionary containing id, length and label
+        sample_dict = dict()
+        sample_dict['input_ids'] = self.input_ids[i].reshape(-1)
+        sample_dict['sequence_len'] = torch.tensor(self.sequence_lens[i]).long()
+        sample_dict['labels'] = torch.tensor(self.labels[i]).type(torch.FloatTensor)
+        return sample_dict
 
     def convert_text_to_input_ids(self,text,pad_to_len):
         # truncate excess words (beyond the length we should pad to)
