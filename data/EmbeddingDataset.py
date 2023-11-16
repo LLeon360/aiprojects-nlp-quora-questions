@@ -27,9 +27,9 @@ class EmbeddingDataset(torch.utils.data.Dataset):
         self.sequence_lens = []
 
         for words in df['question_text']:
-            input_ids, max_seq_length = self.convert_text_to_input_ids(words, max_seq_length)
+            input_ids, seq_len = self.convert_text_to_input_ids(words, max_seq_length)
             self.input_ids.append(input_ids)
-            self.sequence_lens.append(max_seq_length)
+            self.sequence_lens.append(seq_len)
 
         #sanity checks
         assert len(self.input_ids) == df.shape[0]
