@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.metrics import recall_score
 
 
-def starting_train(train_dataset, val_dataset, model, hyperparameters, n_eval, device):
+def lstm_train(train_dataset, val_dataset, model, hyperparameters, n_eval, device):
     """
     Trains and evaluates a model.
 
@@ -28,7 +28,7 @@ def starting_train(train_dataset, val_dataset, model, hyperparameters, n_eval, d
         train_dataset, batch_size=batch_size, shuffle=True
     )
     val_loader = torch.utils.data.DataLoader(
-        val_dataset, batch_size=len(val_dataset), shuffle=True
+        val_dataset, batch_size=batch_size, shuffle=True
     )
 
     # Initalize optimizer (for gradient descent) and loss function
@@ -45,7 +45,8 @@ def starting_train(train_dataset, val_dataset, model, hyperparameters, n_eval, d
         # Loop over each batch in the dataset
         for batch in tqdm(train_loader):
             
-            features, labels = batch
+            features = batch["input_ids"]
+            labels = batch["labels"]
             # features = features.to(device)
             # labels = labels.to(device)
 
@@ -54,7 +55,7 @@ def starting_train(train_dataset, val_dataset, model, hyperparameters, n_eval, d
             # outputs = model(features)
             # outputs = torch.flatten(outputs)
 
-            outputs = forward_prop(features, labels, model, device)
+            outputs = forward_prop(batch, model, device)
 
             # Backpropagation and gradient descent            
 
@@ -87,6 +88,8 @@ def starting_train(train_dataset, val_dataset, model, hyperparameters, n_eval, d
 
                 #turn on training, evaluate turns off training
                 model.train()
+
+                print(f'Loss/train {loss} Loss/val {results["loss"]}')
 
             step += 1
 
@@ -130,9 +133,10 @@ def evaluate(val_loader, model, loss_fn, device):
     #turn off training
     model.eval()
 
-    features, labels = next(iter(val_loader))
+    batch = next(iter(val_loader))
+    labels = batch["labels"]
     
-    outputs = forward_prop(features, labels, model, device)
+    outputs = forward_prop(batch, model, device)
     
     loss = loss_fn(outputs, labels)
     preds = torch.round(outputs).detach()
@@ -143,11 +147,11 @@ def evaluate(val_loader, model, loss_fn, device):
         "recall": compute_recall(preds, labels)
     }
 
-def forward_prop(features, labels, model, device): 
+def forward_prop(batch, model, device): 
     
-    features = features.to(device)
-    labels = labels.to(device)
+    # features = features.to(device)
+    # labels = labels.to(device)
 
-    outputs = model(features)
-    outputs = torch.squeeze(outputs)
+    outputs = model(batch)
+    outputs = torch.flatten(outputs)
     return outputs
