@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.metrics import recall_score
 
 
-def lstm_train(train_dataset, val_dataset, model, hyperparameters, n_eval, device):
+def lstm_train(train_dataset, val_dataset, sampler, model, hyperparameters, n_eval, device):
     """
     Trains and evaluates a model.
 
@@ -25,7 +25,7 @@ def lstm_train(train_dataset, val_dataset, model, hyperparameters, n_eval, devic
 
     # Initialize dataloaders
     train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=True
+        train_dataset, sampler=sampler, batch_size=batch_size, shuffle=True
     )
     val_loader = torch.utils.data.DataLoader(
         val_dataset, batch_size=batch_size, shuffle=True
