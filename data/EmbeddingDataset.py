@@ -7,14 +7,10 @@ class EmbeddingDataset(torch.utils.data.Dataset):
     Embeddings Dataset
     """
 
-    def __init__(self, df, vocab, max_seq_length, pad_token, unk_token):
+    def __init__(self, df, vocab, max_seq_length, pad_token, unk_token, test_dataset = False):
         '''
         data_path (str): path for the csv file that contains the data that you want to use
         '''
-
-        # get labels from label column as list
-        self.labels = df['target'].tolist()
-
         # make dictionaries translating from word to index and index to word
         self.word2idx = {term:idx for idx,term in enumerate(vocab)}
         self.idx2word = {idx:word for word,idx in self.word2idx.items()}
@@ -26,10 +22,17 @@ class EmbeddingDataset(torch.utils.data.Dataset):
         self.input_ids = []
         self.sequence_lens = []
 
+        count = 0
         for words in df['question_text']:
             input_ids, seq_len = self.convert_text_to_input_ids(words, max_seq_length)
             self.input_ids.append(input_ids)
             self.sequence_lens.append(seq_len)
+
+        # get labels from label column as list
+        if(test_dataset):
+            self.labels = [0] * df['question_text'].shape[0]
+        else:
+            self.labels = df['target'].tolist()
 
         #sanity checks
         assert len(self.input_ids) == df.shape[0]

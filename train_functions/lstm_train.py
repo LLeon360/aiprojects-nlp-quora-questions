@@ -89,7 +89,7 @@ def lstm_train(train_dataset, val_dataset, model, hyperparameters, n_eval, devic
                 #turn on training, evaluate turns off training
                 model.train()
 
-                print(f'Loss/train {loss} Loss/val {results["loss"]}')
+                print(f'\nLoss/train {loss} Loss/val {results["loss"]}')
 
             step += 1
 
