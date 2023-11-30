@@ -3,12 +3,13 @@ import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
+from torch.utils.data import BatchSampler
 import numpy as np
 
 from sklearn.metrics import recall_score
 
 
-def lstm_train(train_dataset, val_dataset, sampler, model, hyperparameters, n_eval, device):
+def lstm_train(train_dataset, val_dataset, train_sampler, model, hyperparameters, n_eval, device):
     """
     Trains and evaluates a model.
 
@@ -25,7 +26,7 @@ def lstm_train(train_dataset, val_dataset, sampler, model, hyperparameters, n_ev
 
     # Initialize dataloaders
     train_loader = torch.utils.data.DataLoader(
-        train_dataset, sampler=sampler, batch_size=batch_size, shuffle=True
+        train_dataset, batch_sampler=BatchSampler(train_sampler, 32, True)
     )
     val_loader = torch.utils.data.DataLoader(
         val_dataset, batch_size=batch_size, shuffle=True
