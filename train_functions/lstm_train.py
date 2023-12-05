@@ -73,7 +73,7 @@ def lstm_train(train_dataset, val_dataset, train_sampler, model, hyperparameters
                 preds = torch.round(outputs).detach()
                 acc = compute_accuracy(preds, labels)
                 writer.add_scalar('Loss/train', loss, epoch)
-                # writer.add_scalar('Accuracy/train', acc, epoch)
+                writer.add_scalar('Accuracy/train', acc, epoch)
                 writer.add_scalar('Specificity/train', compute_specificity(preds, labels), epoch)
                 writer.add_scalar('Recall/train', compute_recall(preds, labels), epoch)
 
@@ -83,14 +83,14 @@ def lstm_train(train_dataset, val_dataset, train_sampler, model, hyperparameters
 
                 results = evaluate(val_loader, model, loss_fn, device) 
                 writer.add_scalar('Loss/val', results["loss"], epoch)
-                # writer.add_scalar('Accuracy/val', results["acc"], epoch)
+                writer.add_scalar('Accuracy/val', results["acc"], epoch)
                 writer.add_scalar('Specificity/val', results["spec"], epoch)
                 writer.add_scalar('Recall/val', results["recall"], epoch)
 
                 #turn on training, evaluate turns off training
                 model.train()
 
-                print(f'\nLoss/train {loss} Loss/val {results["loss"]}')
+                print(f'\nAcc/train {acc} Loss/train {loss} Acc/val {results["acc"]} Loss/val {results["loss"]}')
 
             step += 1
 
